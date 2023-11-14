@@ -1,0 +1,193 @@
+behavior Chopstick {
+  Philosopher holding, waiting;
+
+  Chopstick(Philosopher h, Philosopher w){
+    holding = h; waiting = w;
+  }
+
+  //@   Chopstick Msg[0] get();
+  //@   requires ST[0] get();
+  //@   requires ST[1] get();
+  //@   ensures receive[0] get();
+  //@   ensures send[0] gotStick();
+  //@   ensures ST[0] gotStick();
+  //@   ensures ST[1] get();
+  //@ also
+  //@   requires ST[0] get();
+  //@   requires ST[1] gotStick();
+  //@   ensures receive[0] get();
+  //@   ensures ST[0] gotStick();
+  //@   ensures ST[1] gotStick();
+  //@ also
+  //@   requires ST[0] get();
+  //@   requires ST[1] release();
+  //@   ensures receive[0] get();
+  //@   ensures ST[0] gotStick();
+  //@   ensures ST[1] release();
+  //@ also
+
+  //@   requires ST[0] get();
+  //@   requires ST[1] get();
+  //@   ensures receive[1] get();
+  //@   ensures send[1] gotStick();
+  //@   ensures ST[0] get();
+  //@   ensures ST[1] gotStick();
+  //@ also
+  //@   requires ST[0] gotStick();
+  //@   requires ST[1] get();
+  //@   ensures receive[1] get();
+  //@   ensures ST[0] gotStick();
+  //@   ensures ST[1] gotStick();
+  //@ also
+  //@   requires ST[0] release();
+  //@   requires ST[1] get();
+  //@   ensures receive[1] get();
+  //@   ensures ST[0] release();
+  //@   ensures ST[1] gotStick();
+
+  void get(Philosopher p){
+    if (holding == null){
+      holding = p;
+      p <- gotStick();
+    } else
+      waiting = p;
+  }
+
+  //@   Chopstick Msg[2] release();
+  //@   requires ST[0] release();
+  //@   requires ST[1] get();
+  //@   ensures receive[0] release();
+  //@   ensures send[0] token;
+  //@   ensures ST[0] token;
+  //@   ensures ST[1] get();
+  //@ also
+  //@   requires ST[0] release();
+  //@   requires ST[1] gotStick();
+  //@   ensures receive[0] release();
+  //@   ensures send[0] token;
+  //@   ensures send[1] gotStick();
+  //@   ensures ST[0] token;
+  //@   ensures ST[1] gotStick();
+  //@ also
+
+  //@   requires ST[0] get();
+  //@   requires ST[1] release();
+  //@   ensures receive[1] release();
+  //@   ensures send[1] token;
+  //@   ensures ST[0] get();
+  //@   ensures ST[1] token;
+  //@ also
+  //@   requires ST[0] gotStick();
+  //@   requires ST[1] release();
+  //@   ensures receive[1] release();
+  //@   ensures send[1] token;
+  //@   ensures send[0] gotStick();
+  //@   ensures ST[0] gotStick();
+  //@   ensures ST[1] token;
+
+  void release(){
+    if (waiting == null)
+      holding = null;
+    else {
+       holding = waiting;
+       waiting<-gotStick();
+       waiting = null;
+    }
+  }
+
+}
+
+behavior Philosopher{
+  Chopstick left, right;
+  int sticks;  // how many sticks it has
+  int n;  // times philosopher has eaten
+
+  Philosopher(Chopstick left_, Chopstick right_){
+    this.left = left_; this.right = right_; this.sticks = 0; this.n = 0;
+  }
+
+  void eat(){
+    left <- get(self);  // pick up left
+  }
+
+  //@   Philosopher Msg[1] gotStick();
+  //@ 	requires ST[0] gotStick();
+  //@ 	requires ST[1] get();
+  //@   ensures receive[0] gotStick();
+  //@   ensures send[1] get();
+  //@ 	ensures ST[0] release();
+  //@ 	ensures ST[1] get();
+  //@ also 
+  //@ 	requires ST[0] release();
+  //@ 	requires ST[1] gotStick();
+  //@ 	ensures receive[1] gotStick();
+  //@ 	ensures send[0] release();
+  //@ 	ensures send[1] release();
+  //@   ensures ST[0] release();
+  //@   ensures ST[1] release();
+
+  //@   Philosopher Msg[3] token;
+  //@   requires ST[0] token;
+  //@   requires ST[1] token;
+  //@   ensures receive[0] token;
+  //@   ensures ST[0] get();
+  //@   ensures ST[1] token;
+  //@ also
+  //@   requires ST[0] get();
+  //@   requires ST[1] token;
+  //@   ensures receive[1] token;
+  //@   ensures send[0] get();
+  //@   ensures ST[0] get();
+  //@   ensures ST[1] get();
+  //@ also
+
+  //@   requires ST[0] token;
+  //@   requires ST[1] token;
+  //@   ensures receive[1] token;
+  //@   ensures ST[0] token;
+  //@   ensures ST[1] get();
+  //@ also
+  //@   requires ST[0] token;
+  //@   requires ST[1] get();
+  //@   ensures receive[0] token;
+  //@   ensures send[0] get();
+  //@   ensures ST[0] get();
+  //@   ensures ST[1] get();
+
+  void gotStick(){
+    if (sticks == 0){
+      sticks++;
+      right <- get(self);  // pick up right
+    } else { // got both
+      join{
+        standardOutput <- println( "Eaten" + (n++) + "times.");  // eating
+        left <- release();
+        right <- release();
+        sticks = 0;
+      } @ eat();
+    }
+
+}
+
+behavior 2PTable{
+
+  void act(String[] args){
+     Chopstick c1 = new Chopstick(null, null);
+     Chopstick c2 = new Chopstick(null, null);
+     Philosopher p1 = new Philosopher(c1,c2);
+     Philosopher p2 = new Philosopher(c1,c2);
+
+     //@ init
+     //@ Chopstick Actor c1(p1, p2)
+     //@ Chopstick Actor c2(p1, p2)
+     //@ Philosopher Actor p1(c1, c2)
+     //@ Philosopher Actor p2(c1, c2)
+
+     p1 <- eat();
+     p2 <- eat();
+
+     //@ send [p1][c1] get();
+     //@ send [p2][c1] get();
+  }
+
+}

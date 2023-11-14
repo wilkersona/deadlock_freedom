@@ -1,0 +1,57 @@
+behavior Part{
+	int using;
+	Aviator waiting0;
+	Aviator waiting1;
+	Aviator waiting2;
+
+	Part(){
+		this.using = 0;
+		this.waiting0 = null;
+		this.waiting1 = null;
+		this.waiting2 = null;
+	}
+
+	void get(Aviator a){
+		if (using < 6) using = using+1; token t0 = a <- got():waitfor(); return null;
+		else if (waiting0 == null) waiting0 = a; return null;
+		else if (waiting1 == null) waiting1 = a; return null;
+		else waiting2 = a; return null;
+	}
+
+	void release(){
+		if (waiting0 == null) using = using-1; return null;
+		else 
+			token t0 = waiting0 <- got():waitfor();
+			waiting0 = waiting1;
+			waiting1 = waiting2;
+			waiting2 = null;
+			return null;
+	}
+}
+
+behavior Avaiator{
+	int gotCount;
+	Aviator part0;
+	Aviator part1;
+	Aviator part2;
+
+	Aviator(engine, fuselage, propeller){
+		this.gotCount = 0;
+		this.part0 = engine;
+		this.part1 = fuselage;
+		this.part2 = propeller;
+	}
+
+	void got(){
+		if (gotCount==2)
+			token t0 = part0 <- release():waitfor();
+			token t1 = part1 <- release():waitfor();
+			token t2 = part2 <- release():waitfor();
+			gotCount = 0;
+			token t3 = part0 <- get(self):waitfor();
+			token t4 = part1 <- get(self):waitfor();
+			token t5 = part2 <- get(self):waitfor();
+			return null;
+		else gotCount=gotCount+1; return null;
+	}
+}

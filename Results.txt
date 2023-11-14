@@ -1,0 +1,22 @@
+wilkea2@DESKTOP-G115MOD:/mnt/c/users/wilkea2/documents/spring2023/research$ python First_half.py > demo.txt
+wilkea2@DESKTOP-G115MOD:/mnt/c/users/wilkea2/documents/spring2023/research$ python Second_half.py
+Messages in queue at time t = 0
+        From: p1,       To: c1,         Session Type: get()
+        From: p2,       To: c2,         Session Type: get()
+Messages in queue at time t = 1
+        From: p2,       To: c2,         Session Type: get()
+        From: c1,       To: p1,         Session Type: gotStick()
+Messages in queue at time t = 2
+        From: c1,       To: p1,         Session Type: gotStick()
+        From: c2,       To: p2,         Session Type: gotStick()
+Messages in queue at time t = 3
+        From: c2,       To: p2,         Session Type: gotStick()
+        From: p1,       To: c2,         Session Type: get()
+Messages in queue at time t = 4
+        From: c2,       To: p2,         Session Type: gotStick()
+Messages in queue at time t = 5
+        From: p2,       To: c1,         Session Type: get()
+Messages in queue at time t = 6
+wilkea2@DESKTOP-G115MOD:/mnt/c/users/wilkea2/documents/spring2023/research$ python First_half.py > demo.txt
+wilkea2@DESKTOP-G115MOD:/mnt/c/users/wilkea2/documents/spring2023/research$ python Second_half.py
+No circular dependencies found!

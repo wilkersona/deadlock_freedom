@@ -1,0 +1,184 @@
+behavior Chopstick{
+	Philosopher pa;
+	Philosopher pb;
+	boolean a_holding;
+	boolean b_holding;
+	boolean a_waiting;
+	boolean b_waiting;
+
+	Chopstick(){}
+
+	void setPhilosophers(Philosopher a, Philosopher b){
+		pa = a;
+		pb = b;
+		a_holding = false;
+		b_holding = false;
+		a_waiting = false;
+		b_waiting = false;
+		return null;
+	}
+
+	//@   requires SessionType[pa] get;
+	//@   requires SessionType[pb] get;
+	//@   ensures receive[pa] get;
+	//@   ensures send[pa] holding;
+	//@   ensures SessionType[pa] holding;
+	//@   ensures SessionType[pb] get;
+	//@ also
+	//@   requires SessionType[pa] get;
+	//@   requires SessionType[pb] holding;
+	//@   ensures receive[pa] get;
+	//@   ensures SessionType[pa] holding;
+	//@   ensures SessionType[pb] holding;
+	//@ also
+	//@   requires SessionType[pa] get;
+	//@   requires SessionType[pb] release;
+	//@   ensures receive[pa] get;
+	//@   ensures SessionType[pa] holding;
+	//@   ensures SessionType[pb] release;
+	//@ also
+
+	//@   requires SessionType[pa] get;
+	//@   requires SessionType[pb] get;
+	//@   ensures receive[pb] get;
+	//@   ensures send[pb] holding;
+	//@   ensures SessionType[pa] get;
+	//@   ensures SessionType[pb] holding;
+	//@ also
+	//@   requires SessionType[pa] holding;
+	//@   requires SessionType[pb] get;
+	//@   ensures receive[pb] get;
+	//@   ensures SessionType[pa] holding;
+	//@   ensures SessionType[pb] holding;
+	//@ also
+	//@   requires SessionType[pa] release;
+	//@   requires SessionType[pb] get;
+	//@   ensures receive[pb] get;
+	//@   ensures SessionType[pa] release;
+	//@   ensures SessionType[pb] holding;
+	void get(Philosopher p){
+		a_holding = a_holding || (p==pa && !b_holding);
+		b_holding = b_holding || (p==pb && !a_holding);
+		a_waiting = p==pa && b_holding;
+		b_waiting = p==pb && a_holding;
+
+		if (p==pa && a_holding)
+			token t0 = pa <- holding():waitfor();
+			return null;
+		else if (p==pb && b_holding)
+			token t0 = pb <- holding():waitfor();
+			return null;
+		else return null;
+	}
+
+	//@   requires SessionType[pa] release;
+	//@   requires SessionType[pb] get;
+	//@   ensures receive[pa] release;
+	//@   ensures SessionType[pa] get;
+	//@   ensures SessionType[pb] get;
+	//@ also
+	//@   requires SessionType[pa] release;
+	//@   requires SessionType[pb] holding;
+	//@   ensures receive[pa] release;
+	//@   ensures send[pb] holding;
+	//@   ensures SessionType[pa] get;
+	//@   ensures SessionType[pb] holding;
+	//@ also
+
+	//@   requires SessionType[pa] get;
+	//@   requires SessionType[pb] release;
+	//@   ensures receive[pb] release;
+	//@   ensures SessionType[pa] get;
+	//@   ensures SessionType[pb] get;
+	//@ also
+	//@   requires SessionType[pa] holding;
+	//@   requires SessionType[pb] release;
+	//@   ensures receive[pb] release;
+	//@   ensures send[pa] holding;
+	//@   ensures SessionType[pa] holding;
+	//@   ensures SessionType[pb] get;
+	void release(){
+		a_holding = a_waiting;
+		b_holding = b_waiting;
+		a_waiting = false;
+		b_waiting = false;
+
+		if (a_holding)
+			token t0 = pa <- holding():waitfor();
+			return null;
+		else if (b_holding)
+			token t0 = pb <- holding():waitfor();
+			return null;
+		else return null;
+	}
+}
+
+behavior Philosopher{
+	Chopstick first;
+	Chopstick second;
+	int sticks;
+
+	Philosopher(Chopstick first_, Chopstick second_){
+    	this.first = first_; 
+    	this.second = second_; 
+    	this.sticks = 0;
+  	}
+
+	//@   requires SessionType[first] holding;
+	//@   requires SessionType[second] get;
+	//@   ensures receive[first] holding;
+	//@   ensures send[second] get;
+	//@   ensures SessionType[first] release;
+	//@   ensures SessionType[second] get;
+	//@ also 
+	//@   requires SessionType[first] release;
+	//@   requires SessionType[second] holding;
+	//@   ensures receive[second] holding;
+	//@   ensures send[first] release;
+	//@   ensures send[second] release;
+	//@   ensures send[first] get:waitfor(release[self, first], release[self, second]);
+	//@   ensures SessionType[first] release;
+	//@   ensures SessionType[second] release;
+  	void holding(){
+  		sticks = (sticks+1)%2;
+
+  		if (sticks==0)
+  			token t0 = first <- release():waitfor();
+  			token t1 = second <- release():waitfor();
+  			token t2 = first <- get():waitfor(t0, t1);
+  			return null;
+  		else
+  			token t0 = second <- get():waitfor();
+  			return null;
+  	}
+}
+
+Init{
+	//@ Actor c1;
+	c1 = new Chopstick();
+	//@ Actor c2;
+	c2 = new Chopstick();
+	//@ Actor p1;
+	p1 = new Philosopher(c1, c2);
+	//@ Actor p2;
+	p2 = new Philosopher(c1, c2);
+
+	c1 <- setPhilosophers(p1, p2):waitfor();
+	c2 <- setPhilosophers(p1, p2):waitfor();
+	//@ SessionType(p1, c1) send get; receive holding; send release; *;
+	//@ SessionType(c1, p1) receive get; send holding; receive release; *;
+
+	//@ SessionType(p1, c2) send get; receive holding; send release; *;
+	//@ SessionType(c2, p1) receive get; send holding; receive release; *;
+
+	//@ SessionType(p2, c1) send get; receive holding; send release; *;
+	//@ SessionType(c1, p2) receive get; send holding; receive release; *;
+
+	//@ SessionType(p2, c2) send get; receive holding; send release; *;
+	//@ SessionType(c2, p2) receive get; send holding; receive release; *;
+
+	//@ Message(p1, c1) get;
+	c1 <- get(p1):waitfor(t0, t1);
+	//@ Message(p2, c1) get;
+	c1 <- get(p2):waitfor(t0, t1);
+}
